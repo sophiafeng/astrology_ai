@@ -120,6 +120,7 @@ async def assess_message(message_history):
         parsed_record["Readings"]
     )
     write_client_record(file_path, updated_content)
+    return updated_content
 
 @traceable
 def parse_assessment_output(output):

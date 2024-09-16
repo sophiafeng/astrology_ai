@@ -10,32 +10,31 @@ from langsmith import traceable
 # Load environment variables
 load_dotenv()
 
+# Define AI system
 client = wrap_openai(OpenAI())
 
 @traceable
-def prompt_compliance_evaluator(run: Run, example: Example) -> dict:
-    inputs = [ {'data': {'content': example.inputs["question"]}, 'type': 'human'} ]
-    outputs = {'data': {'content': example.outputs["answer"]}}
-
+def client_record_accuracy_evaluator(run: Run, example: Example) -> dict:
+    inputs = example.inputs["message_history"]
+    model_output = example.outputs['output']
     print(f"\n\nInputs: {inputs}\n\n")
-    print(f"\n\nOutputs: {outputs}\n\n")
-
+    print(f"\n\nOutputs: {model_output}\n\n")
 
     # Extract system prompt
-    system_prompt = next((msg['data']['content'] for msg in inputs if msg['type'] == 'system'), "")
+    system_prompt = next((msg['content'] for msg in inputs if msg['role'] == 'system'), "")
 
     # Extract message history
     message_history = []
     for msg in inputs:
-        if msg['type'] in ['human', 'ai']:
+        if msg['role'] in ['user', 'assistant']:
             message_history.append({
-                "role": "user" if msg['type'] == 'human' else "assistant",
-                "content": msg['data']['content']
+                "role": msg['role'],
+                "content": msg['content']
             })
 
     # Extract latest user message and model output
     latest_message = message_history[-1]['content'] if message_history else ""
-    model_output = outputs['data']['content']
+    print(f"\n\nLatest User Message: {latest_message}\n\n")
 
     evaluation_prompt = f"""
     System Prompt: {system_prompt}
@@ -48,7 +47,9 @@ def prompt_compliance_evaluator(run: Run, example: Example) -> dict:
     Model Output: {model_output}
 
     Based on the above information, evaluate the model's output for compliance with the system prompt and context of the conversation. 
-    Give your answer on a scale of 1 to 5, where 1 means that the model_output is not helpful at all and is completely irrelevant to the latest_message, or very partial, and 5 means that the model_output completely and helpfully addresses the latest_message.
+    Give your answer on a scale of 1 to 5, where 5 means that the model_output is an accurate client record of the alerts and readings
+    that came up in the conversation in message_history and 1 means that the model_output is a completely inaccurate client record of the alerts and readings that
+    came up in the conversation in message_history.
 
     Also provide a brief explanation for your score.
 
@@ -85,14 +86,14 @@ def prompt_compliance_evaluator(run: Run, example: Example) -> dict:
 
 
 # The name or UUID of the LangSmith dataset to evaluate on.
-data = "astrology dataset 2"
+data = "sophAI_report_output"
 
 # A string to prefix the experiment name with.
 experiment_prefix = "astrology_ai_prompt_compliance"
 
 # List of evaluators to score the outputs of target task
 evaluators = [
-    prompt_compliance_evaluator
+    client_record_accuracy_evaluator
 ]
 
 # Evaluate the target task
