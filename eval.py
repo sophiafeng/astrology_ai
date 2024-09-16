@@ -85,7 +85,7 @@ def prompt_compliance_evaluator(run: Run, example: Example) -> dict:
 
 
 # The name or UUID of the LangSmith dataset to evaluate on.
-data = "astrology dataset"
+data = "astrology dataset 2"
 
 # A string to prefix the experiment name with.
 experiment_prefix = "astrology_ai_prompt_compliance"

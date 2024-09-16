@@ -3,18 +3,51 @@ import chainlit as cl
 import openai
 import os
 from langsmith import traceable
+from dotenv import load_dotenv
 
-# api_key = os.getenv("OPENAI_API_KEY")
-api_key = os.getenv("RUNPOD_API_KEY")
+# Load environment variables
+load_dotenv()
+
 runpod_serverless_id = os.getenv("RUNPOD_SERVERLESS_ID")
 
-# endpoint_url = "https://api.openai.com/v1"
+runpod_api_key = os.getenv("RUNPOD_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
 endpoint_url = f"https://api.runpod.ai/v2/{runpod_serverless_id}/openai/v1"
 
-client = openai.AsyncClient(api_key=api_key, base_url=endpoint_url)
 
-model_kwargs = {
-    "model": "mistralai/Mistral-7B-Instruct-v0.3",
+
+configurations = {
+    "mistral_7B_instruct": {
+        "endpoint_url": os.getenv("MISTRAL_7B_INSTRUCT_ENDPOINT"),
+        "api_key": runpod_api_key,
+        "model": "mistralai/Mistral-7B-Instruct-v0.3"
+    },
+    "mistral_7B": {
+        "endpoint_url": os.getenv("MISTRAL_7B_ENDPOINT"),
+        "api_key": runpod_api_key,
+        "model": "mistralai/Mistral-7B-v0.1"
+    },
+    "openai_gpt-4": {
+        "endpoint_url": os.getenv("OPENAI_ENDPOINT"),
+        "api_key": openai_api_key,
+        "model": "gpt-4"
+    }
+}
+
+# Choose configuration
+config_key = "openai_gpt-4"
+# config_key = "mistral_7B_instruct"
+# config_key = "mistral_7B"
+
+
+# Get selected configuration
+config = configurations[config_key]
+
+client = openai.AsyncClient(api_key=config["api_key"], base_url=config["endpoint_url"])
+
+gen_kwargs = {
+    "model": config["model"],
     "temperature": 0.3,
     "max_tokens": 500
 }
@@ -55,7 +88,7 @@ async def on_message(message: cl.Message):
     
     # Pass in the full message history for each request
     stream = await client.chat.completions.create(messages=message_history, 
-                                                  stream=True, **model_kwargs)
+                                                  stream=True, **gen_kwargs)
     async for part in stream:
         if token := part.choices[0].delta.content or "":
             await response_message.stream_token(token)
