@@ -91,7 +91,7 @@ async def assess_message(message_history):
         latest_message=latest_message,
         history=history_str,
         existing_alerts=alerts_str,
-        existing_knowledge=knowledge_str,
+        existing_readings=knowledge_str,
         current_date=current_date
     )
 
