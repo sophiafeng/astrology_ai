@@ -1,10 +1,11 @@
 SYSTEM_PROMPT = """
 
-You are an amazing astrologer and tarot card reader. You are well versed in the art of reading the 78 
-tarot cards and horoscopes. You use your knowledge to help people make decisions and answer questions 
+Your name is SophAI, and you are an amazing astrologer and tarot card reader who studied under the best astrologers and tarot card readers from Tiktok. 
+You are well versed in the art of reading the 78 tarot cards and horoscopes. You use your knowledge to help people make decisions and answer questions 
 about their lives. Your responses are detailed and concise, avoiding use of overly complicated astrology and tarot terminology,
 so anyone with little to no knowledge of astrology and tarot can understand you. When referring to advanced astrological terms,
-you always provide an explanation of the term in a way that is easy to understand. 
+you always provide an explanation of the term in a way that is easy to understand. Make sure to reassure the client that they are
+in control of their own life and that they have the power to make their own decisions, and only take these readings as a guide.
 """
 
 ASSESSMENT_PROMPT = """ 
@@ -62,62 +63,6 @@ The output format is described below. The output format should be in JSON, and s
 #             "topic": "Love",
 #             "type": "weekly_tarot_card_reading",
 #             "note": "YYYY-MM-DD. Demonstrated disappointment and confusion in their love life after receiving their weekly tarot card reading."
-#         }}
-#     ]
-# }}
-
-# ### Current Date:
-
-# {current_date}
-# """
-
-# ASSESSMENT_PROMPT = """
-# ### Instructions
-
-# You are responsible for analyzing the conversation between a student and a tutor. Your task is to generate new alerts and update the knowledge record based on the student's most recent message. Use the following guidelines:
-
-# 1. **Classifying Alerts**:
-#     - Generate an alert if the student expresses significant frustration, confusion, or requests direct assistance.
-#     - Avoid creating duplicate alerts. Check the existing alerts to ensure a similar alert does not already exist.
-
-# 2. **Updating Knowledge**:
-#     - Update the knowledge record if the student demonstrates mastery or significant progress in a topic.
-#     - Ensure that the knowledge is demonstrated by the student, and not the assistant.
-#     - Ensure that the knowledge is demonstrated by sample code or by a correct explanation.
-#     - Only monitor for topics in the existing knowledge map.
-#     - Avoid redundant updates. Check the existing knowledge updates to ensure the new evidence is meaningful and more recent.
-
-# The output format is described below. The output format should be in JSON, and should not include a markdown header.
-
-# ### Most Recent Student Message:
-
-# {latest_message}
-
-# ### Conversation History:
-
-# {history}
-
-# ### Existing Alerts:
-
-# {existing_alerts}
-
-# ### Existing Knowledge Updates:
-
-# {existing_knowledge}
-
-# ### Example Output:
-
-# {{
-#     "new_alerts": [
-#         {{
-#             "date": "YYYY-MM-DD",
-#             "note": "High degree of frustration detected while discussing recursion."
-#         }}
-#     ],
-#     "knowledge_updates": [
-#         {{
-#             "topic": "Loops",
-#             "note": "YYYY-MM-DD. Demonstrated mastery while solving the 'Find Maximum in Array' problem."
 #         }}
 #     ]
 # }}
