@@ -1,21 +1,19 @@
 import os
 
-def read_student_record(file_path):
+def read_client_record(file_path):
     if not os.path.exists(file_path):
         print(f"File {file_path} does not exist. Creating a new file with default content.")
         default_content = """
-# Student Record
+# Client Record
 
-## Student Information
-**Name:** Tim Lee
+## Client Information
+**Name:** Sophia Feng
 
 ## Alerts
 _No alerts yet._
 
-## Knowledge
-- **Variables:** Not demonstrated
-- **Loops:** Not demonstrated
-- **Recursion:** Not demonstrated
+## Readings
+_No readings yet._
 """
         with open(file_path, "w") as file:
             file.write(default_content)
@@ -24,13 +22,13 @@ _No alerts yet._
     with open(file_path, "r") as file:
         return file.read()
 
-def write_student_record(file_path, content):
+def write_client_record(file_path, content):
     with open(file_path, "w") as file:
         file.write(content)
 
-def format_student_record(student_info, alerts, knowledge):
-    record = "# Student Record\n\n## Student Information\n"
-    for key, value in student_info.items():
+def format_client_record(client_info, alerts, readings):
+    record = "# Client Record\n\n## Client Information\n"
+    for key, value in client_info.items():
         record += f"**{key}:** {value}\n"
     
     record += "\n## Alerts\n"
@@ -40,16 +38,16 @@ def format_student_record(student_info, alerts, knowledge):
     else:
         record += "_No alerts yet._\n"
     
-    record += "\n## Knowledge\n"
-    for key, value in knowledge.items():
+    record += "\n## Readings\n"
+    for key, value in readings.items():
         record += f"- **{key}:** {value}\n"
     
     return record
 
-def parse_student_record(markdown_content):
-    student_info = {}
+def parse_client_record(markdown_content):
+    client_info = {}
     alerts = []
-    knowledge = {}
+    readings = {}
     
     current_section = None
     lines = markdown_content.split("\n")
@@ -58,12 +56,12 @@ def parse_student_record(markdown_content):
         line = line.strip()  # Strip leading/trailing whitespace
         if line.startswith("## "):
             current_section = line[3:].strip()
-        elif current_section == "Student Information" and line.startswith("**"):
+        elif current_section == "Client Information" and line.startswith("**"):
             if ":** " in line:
                 key, value = line.split(":** ", 1)
                 key = key.strip("**").strip()
                 value = value.strip()
-                student_info[key] = value
+                client_info[key] = value
         elif current_section == "Alerts":
             if "_No alerts yet._" in line:
                 alerts = []
@@ -73,17 +71,17 @@ def parse_student_record(markdown_content):
                     date = date.strip("- **").strip()
                     note = note.strip()
                     alerts.append({"date": date, "note": note})
-        elif current_section == "Knowledge" and line.startswith("- **"):
+        elif current_section == "Readings" and line.startswith("- **"):
             if ":** " in line:
                 key, value = line.split(":** ", 1)
                 key = key.strip("- **").strip()
                 value = value.strip()
-                knowledge[key] = value
+                readings[key] = value
     
     final_record = {
-        "Student Information": student_info,
+        "Client Information": client_info,
         "Alerts": alerts,
-        "Knowledge": knowledge
+        "Readings": readings
     }
     print(f"Final parsed record: {final_record}")
     return final_record

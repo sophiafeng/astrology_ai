@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import json
 from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT
-from student_record import read_student_record, write_student_record, format_student_record, parse_student_record
+from client_record import read_client_record, write_client_record, format_client_record, parse_client_record
 
 # Load environment variables
 load_dotenv()
@@ -70,19 +70,20 @@ def get_latest_user_message(message_history):
 
 @traceable
 async def assess_message(message_history):
-    file_path = "student_record.md"
-    markdown_content = read_student_record(file_path)
-    parsed_record = parse_student_record(markdown_content)
+    file_path = "readings_record.md"
+    markdown_content = read_client_record(file_path)
+    print("----------------\n [DEBUG] Markdown content: \n\n", markdown_content, "\n----------------\n" )
+    parsed_record = parse_client_record(markdown_content)
 
     latest_message = get_latest_user_message(message_history)
 
     # Remove the original prompt from the message history for assessment
     filtered_history = [msg for msg in message_history if msg['role'] != 'system']
 
-    # Convert message history, alerts, and knowledge to strings
+    # Convert message history, alerts, and readings to strings
     history_str = json.dumps(filtered_history, indent=4)
     alerts_str = json.dumps(parsed_record.get("Alerts", []), indent=4)
-    knowledge_str = json.dumps(parsed_record.get("Knowledge", {}), indent=4)
+    readings_str = json.dumps(parsed_record.get("Readings", {}), indent=4)
     
     current_date = datetime.now().strftime('%Y-%m-%d')
 
@@ -91,7 +92,7 @@ async def assess_message(message_history):
         latest_message=latest_message,
         history=history_str,
         existing_alerts=alerts_str,
-        existing_readings=knowledge_str,
+        existing_readings=readings_str,
         current_date=current_date
     )
 
@@ -103,30 +104,30 @@ async def assess_message(message_history):
     print("Assessment Output: \n\n", assessment_output)
 
     # Parse the assessment output
-    new_alerts, knowledge_updates = parse_assessment_output(assessment_output)
+    new_alerts, readings_updates = parse_assessment_output(assessment_output)
 
-    # Update the student record with the new alerts and knowledge updates
+    # Update the client record with the new alerts and readings updates
     parsed_record["Alerts"].extend(new_alerts)
-    for update in knowledge_updates:
+    for update in readings_updates:
         topic = update["topic"]
         note = update["note"]
-        parsed_record["Knowledge"][topic] = note
+        parsed_record["Readings"][topic] = note
 
     # Format the updated record and write it back to the file
-    updated_content = format_student_record(
-        parsed_record["Student Information"],
+    updated_content = format_client_record(
+        parsed_record["Client Information"],
         parsed_record["Alerts"],
-        parsed_record["Knowledge"]
+        parsed_record["Readings"]
     )
-    write_student_record(file_path, updated_content)
+    write_client_record(file_path, updated_content)
 
 @traceable
 def parse_assessment_output(output):
     try:
         parsed_output = json.loads(output)
         new_alerts = parsed_output.get("new_alerts", [])
-        knowledge_updates = parsed_output.get("knowledge_updates", [])
-        return new_alerts, knowledge_updates
+        readings_updates = parsed_output.get("readings_updates", [])
+        return new_alerts, readings_updates
     except json.JSONDecodeError as e:
         print("Failed to parse assessment output:", e)
         return [], []
