@@ -4,6 +4,7 @@ from openai import OpenAI
 import json
 from dotenv import load_dotenv
 from langsmith.wrappers import wrap_openai
+from prompts import ASSESSMENT_PROMPT
 
 from langsmith import traceable
 
@@ -14,14 +15,15 @@ load_dotenv()
 client = wrap_openai(OpenAI())
 
 @traceable
-def client_record_accuracy_evaluator(run: Run, example: Example) -> dict:
+def horoscope_suggestion_relevance_evaluator(run: Run, example: Example) -> dict:
     inputs = example.inputs["message_history"]
     model_output = example.outputs['output']
-    print(f"\n\nInputs: {inputs}\n\n")
-    print(f"\n\nOutputs: {model_output}\n\n")
+    print(f"\n\n-----------Inputs: {inputs}\n\n")
+    print(f"\n\n-----------Outputs: {model_output}\n\n")
 
     # Extract system prompt
     system_prompt = next((msg['content'] for msg in inputs if msg['role'] == 'system'), "")
+    print(f"\n\n-----------System Prompt: {system_prompt}\n\n")
 
     # Extract message history
     message_history = []
@@ -32,31 +34,36 @@ def client_record_accuracy_evaluator(run: Run, example: Example) -> dict:
                 "content": msg['content']
             })
 
-    # Extract latest user message and model output
-    latest_message = message_history[-1]['content'] if message_history else ""
-    print(f"\n\nLatest User Message: {latest_message}\n\n")
+    # # Extract latest user message and model output
+    # latest_message = message_history[-1]['content'] if message_history else ""
+    # print(f"\n\n-----------Latest User Message: {latest_message}\n\n")
 
     evaluation_prompt = f"""
     System Prompt: {system_prompt}
 
+    Assessment Prompt: {ASSESSMENT_PROMPT}
+
     Message History:
     {json.dumps(message_history, indent=2)}
 
-    Latest User Message: {latest_message}
-
     Model Output: {model_output}
 
-    Based on the above information, evaluate the model's output for compliance with the system prompt and context of the conversation. 
-    Give your answer on a scale of 1 to 5, where 5 means that the model_output is an accurate client record of the alerts and readings
-    that came up in the conversation in message_history and 1 means that the model_output is a completely inaccurate client record of the alerts and readings that
-    came up in the conversation in message_history.
+    Based on the above information, evaluate the model's output for relevance of client record based on System Prompt, Assessment Prompt, and Message History. 
+    Give your answer on a scale of 1 to 5, with the following guidelines:
+        5: model_output contains entirely relevant suggestions that came up in the conversation in message_history
+        4: model_output contains mostly relevant suggestions that came up in the conversation in message_history
+        3: model_output contains some relevant suggestions that came up in the conversation in message_history
+        2: model_output contains little to no relevant suggestions based on conversation in message_history
+        1: model_output contains entirely irrelevant suggestions based on conversation in message_history
 
     Also provide a brief explanation for your score.
 
     Respond in the following JSON format:
     {{
         "score": <int>,
-        "explanation": "<string>"
+        "explanation": "<string>",
+        "irrelevant_suggestions": ["<string>", "<string>", "..."],
+        "missed_suggestions": ["<string>", "<string>", "..."]
     }}
     """
 
@@ -85,15 +92,20 @@ def client_record_accuracy_evaluator(run: Run, example: Example) -> dict:
         }
 
 
+@traceable
+def daily_horoscope_summary_accuracy_evaluator(run: Run, example: Example) -> dict:
+    pass
+
+
 # The name or UUID of the LangSmith dataset to evaluate on.
-data = "sophAI_report_output"
+data = "daily-horoscope"
 
 # A string to prefix the experiment name with.
-experiment_prefix = "astrology_ai_prompt_compliance"
+experiment_prefix = "horoscope_suggestion_relevance"
 
 # List of evaluators to score the outputs of target task
 evaluators = [
-    client_record_accuracy_evaluator
+    horoscope_suggestion_relevance_evaluator
 ]
 
 # Evaluate the target task

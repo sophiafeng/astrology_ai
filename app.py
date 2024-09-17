@@ -36,11 +36,17 @@ configurations = {
         "endpoint_url": os.getenv("OPENAI_ENDPOINT"),
         "api_key": openai_api_key,
         "model": "gpt-4"
+    },
+    "openai_gpt-4o-mini": {
+        "endpoint_url": os.getenv("OPENAI_ENDPOINT"),
+        "api_key": openai_api_key,
+        "model": "gpt-4o-mini"
     }
 }
 
 # Choose configuration
-config_key = "openai_gpt-4"
+# config_key = "openai_gpt-4"
+config_key = "openai_gpt-4o-mini"
 # config_key = "mistral_7B_instruct"
 # config_key = "mistral_7B"
 
@@ -70,7 +76,7 @@ def get_latest_user_message(message_history):
 
 @traceable
 async def assess_message(message_history):
-    file_path = "readings_record.md"
+    file_path = "client_record.md"
     markdown_content = read_client_record(file_path)
     print("----------------\n [DEBUG] Markdown content: \n\n", markdown_content, "\n----------------\n" )
     parsed_record = parse_client_record(markdown_content)
@@ -80,10 +86,9 @@ async def assess_message(message_history):
     # Remove the original prompt from the message history for assessment
     filtered_history = [msg for msg in message_history if msg['role'] != 'system']
 
-    # Convert message history, alerts, and readings to strings
+    # Convert message history and suggestions to strings
     history_str = json.dumps(filtered_history, indent=4)
-    alerts_str = json.dumps(parsed_record.get("Alerts", []), indent=4)
-    readings_str = json.dumps(parsed_record.get("Readings", {}), indent=4)
+    suggestions_str = json.dumps(parsed_record.get("Suggestions", {}), indent=4)
     
     current_date = datetime.now().strftime('%Y-%m-%d')
 
@@ -91,44 +96,47 @@ async def assess_message(message_history):
     filled_prompt = ASSESSMENT_PROMPT.format(
         latest_message=latest_message,
         history=history_str,
-        existing_alerts=alerts_str,
-        existing_readings=readings_str,
+        existing_suggestions=suggestions_str,
         current_date=current_date
     )
 
-    print("Filled prompt: \n\n", filled_prompt)
+    print("\n\n-----------Filled prompt: \n\n", filled_prompt, "\n\n")
 
     response = await client.chat.completions.create(messages=[{"role": "system", "content": filled_prompt}], **gen_kwargs)
 
     assessment_output = response.choices[0].message.content.strip()
-    print("Assessment Output: \n\n", assessment_output)
+    print("\n\n-----------Assessment Output: \n\n", assessment_output, "\n\n")
 
     # Parse the assessment output
-    new_alerts, readings_updates = parse_assessment_output(assessment_output)
+    suggestion_updates = parse_assessment_output(assessment_output)
 
-    # Update the client record with the new alerts and readings updates
-    parsed_record["Alerts"].extend(new_alerts)
-    for update in readings_updates:
+    # Update the client record with the new suggestions
+    for update in suggestion_updates:
         topic = update["topic"]
-        note = update["note"]
-        parsed_record["Readings"][topic] = note
+        date = update["date"]
+        suggestion = update["suggestion"]
+        reason = update["reason"]
+        parsed_record["Suggestions"][topic] = {
+            "topic": topic,
+            "date": date,
+            "suggestion": suggestion,
+            "reason": reason
+        }
 
     # Format the updated record and write it back to the file
     updated_content = format_client_record(
         parsed_record["Client Information"],
-        parsed_record["Alerts"],
-        parsed_record["Readings"]
+        parsed_record["Suggestions"]
     )
     write_client_record(file_path, updated_content)
-    return updated_content
+    return suggestion_updates
 
 @traceable
 def parse_assessment_output(output):
     try:
         parsed_output = json.loads(output)
-        new_alerts = parsed_output.get("new_alerts", [])
-        readings_updates = parsed_output.get("readings_updates", [])
-        return new_alerts, readings_updates
+        suggestion_updates = parsed_output.get("suggestion_updates", [])
+        return suggestion_updates
     except json.JSONDecodeError as e:
         print("Failed to parse assessment output:", e)
         return [], []

@@ -9,11 +9,8 @@ def read_client_record(file_path):
 ## Client Information
 **Name:** Sophia Feng
 
-## Alerts
-_No alerts yet._
-
-## Readings
-_No readings yet._
+## Suggestions
+_No suggestions yet._
 """
         with open(file_path, "w") as file:
             file.write(default_content)
@@ -26,28 +23,20 @@ def write_client_record(file_path, content):
     with open(file_path, "w") as file:
         file.write(content)
 
-def format_client_record(client_info, alerts, readings):
+def format_client_record(client_info, suggestions):
     record = "# Client Record\n\n## Client Information\n"
     for key, value in client_info.items():
         record += f"**{key}:** {value}\n"
     
-    record += "\n## Alerts\n"
-    if alerts:
-        for alert in alerts:
-            record += f"- **{alert['date']}:** {alert['note']}\n"
-    else:
-        record += "_No alerts yet._\n"
-    
-    record += "\n## Readings\n"
-    for key, value in readings.items():
+    record += "\n## Suggestions\n"
+    for key, value in suggestions.items():
         record += f"- **{key}:** {value}\n"
     
     return record
 
 def parse_client_record(markdown_content):
     client_info = {}
-    alerts = []
-    readings = {}
+    suggestions = {}
     
     current_section = None
     lines = markdown_content.split("\n")
@@ -62,26 +51,16 @@ def parse_client_record(markdown_content):
                 key = key.strip("**").strip()
                 value = value.strip()
                 client_info[key] = value
-        elif current_section == "Alerts":
-            if "_No alerts yet._" in line:
-                alerts = []
-            elif line.startswith("- **"):
-                if ":** " in line:
-                    date, note = line.split(":** ", 1)
-                    date = date.strip("- **").strip()
-                    note = note.strip()
-                    alerts.append({"date": date, "note": note})
-        elif current_section == "Readings" and line.startswith("- **"):
+        elif current_section == "Suggestions" and line.startswith("- **"):
             if ":** " in line:
                 key, value = line.split(":** ", 1)
                 key = key.strip("- **").strip()
                 value = value.strip()
-                readings[key] = value
+                suggestions[key] = value
     
     final_record = {
         "Client Information": client_info,
-        "Alerts": alerts,
-        "Readings": readings
+        "Suggestions": suggestions
     }
     print(f"Final parsed record: {final_record}")
     return final_record
